@@ -11,15 +11,18 @@ public class SleepWiseApp extends JFrame {
     private JComboBox<String> wakeFeelingDropdown, screenUseDropdown, caffeineUseDropdown, exerciseDropdown, bedtimeConsistencyDropdown;
     private JTextArea chatbotArea;
     private JButton submitButton;
+    private JButton infoButton;
 
     private ArrayList<Double> sleepDurations = new ArrayList<>();
+    private ImageIcon logoIcon;
+    private Image logoImage;
 
     public SleepWiseApp() {
         setTitle("SleepWise");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(760, 880);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(20, 20));
+        setLayout(new BorderLayout(10, 10));
 
         Color background = Color.decode("#E6F0F3");
         Color primary = Color.decode("#2E7DAB");
@@ -27,20 +30,20 @@ public class SleepWiseApp extends JFrame {
         Color fontColor = Color.decode("#1B1B1B");
         Color white = Color.white;
 
-        Font font = new Font("Segoe UI", Font.PLAIN, 17);
-        Font fontBold = new Font("Segoe UI", Font.BOLD, 17);
+        Font font = new Font("Segoe UI", Font.PLAIN, 15);
+        Font fontBold = new Font("Segoe UI", Font.BOLD, 16);
 
         JPanel container = new JPanel();
-        container.setLayout(new BorderLayout(20, 20));
+        container.setLayout(new BorderLayout(10, 10));
         container.setBackground(background);
-        container.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        container.setBorder(BorderFactory.createEmptyBorder(30, 30, 0, 30));
 
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBackground(white);
         inputPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primary, 2), "Sleep Input", 0, 0, fontBold, primary));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
@@ -88,7 +91,8 @@ public class SleepWiseApp extends JFrame {
         chatbotArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primary, 2), "Sleep Coach Feedback", 0, 0, fontBold, primary));
 
         JScrollPane scrollPane = new JScrollPane(chatbotArea);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        scrollPane.setPreferredSize(new Dimension(720, 240));
         container.add(scrollPane, BorderLayout.CENTER);
 
         submitButton = new JButton("Submit Sleep Log");
@@ -96,7 +100,7 @@ public class SleepWiseApp extends JFrame {
         submitButton.setForeground(Color.white);
         submitButton.setBackground(primary);
         submitButton.setFocusPainted(false);
-        submitButton.setBorder(BorderFactory.createEmptyBorder(12, 40, 12, 40));
+        submitButton.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
         submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         submitButton.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -110,13 +114,48 @@ public class SleepWiseApp extends JFrame {
 
         submitButton.addActionListener(e -> evaluateSleep());
 
+        logoImage = new ImageIcon("assets/logo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+        logoIcon = new ImageIcon(logoImage);
+        infoButton = new JButton(logoIcon);
+        infoButton.setPreferredSize(new Dimension(50, 50));
+        infoButton.setBorder(BorderFactory.createEmptyBorder());
+        infoButton.setContentAreaFilled(false);
+        infoButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        infoButton.setToolTipText("About SleepWise");
+
+        infoButton.addActionListener(e -> showInfoDialog());
+        infoButton.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                infoButton.setIcon(new ImageIcon(logoImage.getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
+            }
+            public void mouseExited(MouseEvent e) {
+                infoButton.setIcon(logoIcon);
+            }
+        });
+
         JPanel bottomPanel = new JPanel();
         bottomPanel.setBackground(background);
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 30, 10));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         bottomPanel.add(submitButton);
-        container.add(bottomPanel, BorderLayout.SOUTH);
+        bottomPanel.add(Box.createHorizontalStrut(10));
+        bottomPanel.add(infoButton);
 
-        add(container);
+        add(container, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private void showInfoDialog() {
+        String info = "SleepWise is a guided sleep log and coaching tool built for students and anyone looking to improve sleep hygiene.\n\n"
+            + "Who it's for:\n"
+            + "- Students with inconsistent sleep schedules\n"
+            + "- Individuals trying to build better pre-sleep habits\n\n"
+            + "How to use:\n"
+            + "1. Enter your sleep and wake time.\n"
+            + "2. Answer questions about your habits and how you felt.\n"
+            + "3. Click 'Submit' to receive personalized suggestions.\n\n"
+            + "SleepWise helps you track patterns and improve the quality and consistency of your rest.";
+
+        JOptionPane.showMessageDialog(this, info, "About SleepWise", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private JComboBox<String> createStyledDropdown(String[] options, Font font) {
