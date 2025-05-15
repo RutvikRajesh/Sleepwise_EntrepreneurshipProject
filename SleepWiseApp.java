@@ -3,163 +3,198 @@ import java.awt.*;
 import java.awt.event.*;
 import java.time.*;
 import java.util.*;
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class SleepWiseApp extends JFrame {
     private JTextField sleepTimeField;
     private JTextField wakeTimeField;
-    private JTextArea historyArea;
-    private JLabel sleepScoreLabel;
-    private JCheckBox[] checklistItems;
-    private JTextArea suggestionsArea;
-    private JButton completeChecklistButton;
-    private JComboBox<String> wakeFeelingDropdown;
+    private JComboBox<String> wakeFeelingDropdown, screenUseDropdown, caffeineUseDropdown, exerciseDropdown, bedtimeConsistencyDropdown;
+    private JTextArea chatbotArea;
+    private JButton submitButton;
 
     private ArrayList<Double> sleepDurations = new ArrayList<>();
-    private ArrayList<String> userFeelings = new ArrayList<>();
-    private boolean checklistCompletedToday = false;
 
     public SleepWiseApp() {
-        setTitle("SleepWise – Smart Sleep Coach");
+        setTitle("SleepWise");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(700, 700);
-        setLayout(new BorderLayout());
+        setSize(760, 880);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout(20, 20));
 
-        // Top Panel: Input fields
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(4, 2));
+        Color background = Color.decode("#E6F0F3");
+        Color primary = Color.decode("#2E7DAB");
+        Color accent = Color.decode("#A3D5E0");
+        Color fontColor = Color.decode("#1B1B1B");
+        Color white = Color.white;
 
-        inputPanel.add(new JLabel("Sleep Time (HH:MM):"));
-        sleepTimeField = new JTextField();
-        inputPanel.add(sleepTimeField);
+        Font font = new Font("Segoe UI", Font.PLAIN, 17);
+        Font fontBold = new Font("Segoe UI", Font.BOLD, 17);
 
-        inputPanel.add(new JLabel("Wake Time (HH:MM):"));
-        wakeTimeField = new JTextField();
-        inputPanel.add(wakeTimeField);
+        JPanel container = new JPanel();
+        container.setLayout(new BorderLayout(20, 20));
+        container.setBackground(background);
+        container.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
-        inputPanel.add(new JLabel("How did you feel after waking up?"));
-        wakeFeelingDropdown = new JComboBox<>(new String[]{"Refreshed", "Okay", "Tired", "Very Tired"});
-        inputPanel.add(wakeFeelingDropdown);
+        JPanel inputPanel = new JPanel(new GridBagLayout());
+        inputPanel.setBackground(white);
+        inputPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primary, 2), "Sleep Input", 0, 0, fontBold, primary));
 
-        JButton logButton = new JButton("Log Sleep");
-        inputPanel.add(logButton);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
-        sleepScoreLabel = new JLabel("Sleep Score: N/A");
-        inputPanel.add(sleepScoreLabel);
-
-        add(inputPanel, BorderLayout.NORTH);
-
-        // Center Panel: History and Suggestions
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2));
-
-        historyArea = new JTextArea();
-        historyArea.setEditable(false);
-        centerPanel.add(new JScrollPane(historyArea));
-
-        suggestionsArea = new JTextArea();
-        suggestionsArea.setEditable(false);
-        centerPanel.add(new JScrollPane(suggestionsArea));
-
-        add(centerPanel, BorderLayout.CENTER);
-
-        // Bottom Panel: Checklist
-        JPanel checklistPanel = new JPanel();
-        checklistPanel.setLayout(new BoxLayout(checklistPanel, BoxLayout.Y_AXIS));
-        checklistPanel.setBorder(BorderFactory.createTitledBorder("Wind-Down Checklist"));
-
-        checklistItems = new JCheckBox[]{
-                new JCheckBox("Dim your lights 1 hour before bed"),
-                new JCheckBox("Avoid screens 30 minutes before sleeping"),
-                new JCheckBox("Avoid caffeine after 4:00 PM"),
-                new JCheckBox("Do 5 minutes of deep breathing"),
-                new JCheckBox("Avoid intense exercise in the evening")
+        JLabel[] labels = new JLabel[]{
+            new JLabel("Sleep Time (HH:MM):"),
+            new JLabel("Wake Time (HH:MM):"),
+            new JLabel("How did you feel after waking up?"),
+            new JLabel("Used screens before bed?"),
+            new JLabel("Drank caffeine after 4 PM?"),
+            new JLabel("Exercised within 2 hours of bed?"),
+            new JLabel("Was bedtime consistent this week?")
         };
 
-        for (JCheckBox item : checklistItems) {
-            checklistPanel.add(item);
+        Component[] inputs = new Component[]{
+            sleepTimeField = new JTextField(),
+            wakeTimeField = new JTextField(),
+            wakeFeelingDropdown = createStyledDropdown(new String[]{"Choose an option", "Refreshed", "Okay", "Tired", "Very Tired"}, font),
+            screenUseDropdown = createStyledDropdown(new String[]{"Choose an option", "No", "Yes, under 30 mins", "Yes, over 30 mins"}, font),
+            caffeineUseDropdown = createStyledDropdown(new String[]{"Choose an option", "No", "Yes"}, font),
+            exerciseDropdown = createStyledDropdown(new String[]{"Choose an option", "No", "Yes"}, font),
+            bedtimeConsistencyDropdown = createStyledDropdown(new String[]{"Choose an option", "Yes", "No"}, font)
+        };
+
+        for (int i = 0; i < labels.length; i++) {
+            labels[i].setFont(fontBold);
+            labels[i].setForeground(primary);
+            gbc.gridx = 0;
+            gbc.gridy = i;
+            inputPanel.add(labels[i], gbc);
+
+            gbc.gridx = 1;
+            gbc.weightx = 1;
+            inputPanel.add(inputs[i], gbc);
         }
 
-        completeChecklistButton = new JButton("Complete Checklist");
-        completeChecklistButton.addActionListener(e -> completeChecklist());
-        checklistPanel.add(completeChecklistButton);
+        container.add(inputPanel, BorderLayout.NORTH);
 
-        add(checklistPanel, BorderLayout.SOUTH);
+        chatbotArea = new JTextArea();
+        chatbotArea.setFont(font);
+        chatbotArea.setEditable(false);
+        chatbotArea.setLineWrap(true);
+        chatbotArea.setWrapStyleWord(true);
+        chatbotArea.setBackground(white);
+        chatbotArea.setForeground(fontColor);
+        chatbotArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primary, 2), "Sleep Coach Feedback", 0, 0, fontBold, primary));
 
-        logButton.addActionListener(e -> logSleep());
+        JScrollPane scrollPane = new JScrollPane(chatbotArea);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        container.add(scrollPane, BorderLayout.CENTER);
 
-        updateSuggestions();
+        submitButton = new JButton("Submit Sleep Log");
+        submitButton.setFont(fontBold);
+        submitButton.setForeground(Color.white);
+        submitButton.setBackground(primary);
+        submitButton.setFocusPainted(false);
+        submitButton.setBorder(BorderFactory.createEmptyBorder(12, 40, 12, 40));
+        submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        submitButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                submitButton.setBackground(accent);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                submitButton.setBackground(primary);
+            }
+        });
+
+        submitButton.addActionListener(e -> evaluateSleep());
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setBackground(background);
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 30, 10));
+        bottomPanel.add(submitButton);
+        container.add(bottomPanel, BorderLayout.SOUTH);
+
+        add(container);
     }
 
-    private void logSleep() {
+    private JComboBox<String> createStyledDropdown(String[] options, Font font) {
+        JComboBox<String> box = new JComboBox<>(options);
+        box.setFont(font);
+        box.setBackground(Color.white);
+        box.setForeground(Color.decode("#1B1B1B"));
+        box.setBorder(BorderFactory.createLineBorder(Color.decode("#CCCCCC")));
+        return box;
+    }
+
+    private void evaluateSleep() {
         try {
-            String sleepInput = sleepTimeField.getText().trim();
-            String wakeInput = wakeTimeField.getText().trim();
+            if (wakeFeelingDropdown.getSelectedIndex() == 0 || screenUseDropdown.getSelectedIndex() == 0 ||
+                caffeineUseDropdown.getSelectedIndex() == 0 || exerciseDropdown.getSelectedIndex() == 0 ||
+                bedtimeConsistencyDropdown.getSelectedIndex() == 0) {
+                JOptionPane.showMessageDialog(this, "Please answer all dropdown questions before submitting.", "Incomplete Input", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
-            LocalTime sleepTime = LocalTime.parse(sleepInput);
-            LocalTime wakeTime = LocalTime.parse(wakeInput);
-
+            LocalTime sleepTime = LocalTime.parse(sleepTimeField.getText().trim());
+            LocalTime wakeTime = LocalTime.parse(wakeTimeField.getText().trim());
             Duration duration = Duration.between(sleepTime, wakeTime);
             if (duration.isNegative()) duration = duration.plusHours(24);
+            double hoursSlept = duration.toMinutes() / 60.0;
+            sleepDurations.add(hoursSlept);
 
-            double hours = duration.toMinutes() / 60.0;
-            sleepDurations.add(hours);
             String feeling = (String) wakeFeelingDropdown.getSelectedItem();
-            userFeelings.add(feeling);
+            String screens = (String) screenUseDropdown.getSelectedItem();
+            String caffeine = (String) caffeineUseDropdown.getSelectedItem();
+            String exercise = (String) exerciseDropdown.getSelectedItem();
+            String consistency = (String) bedtimeConsistencyDropdown.getSelectedItem();
 
-            historyArea.append("Slept for: " + String.format("%.2f", hours) + " hours, Felt: " + feeling + "\n");
-            checklistCompletedToday = false;
-            updateSleepScore();
-            updateSuggestions();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Please enter times in HH:MM format.", "Input Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
+            int score = 0;
+            if (hoursSlept >= 8) score += 2;
+            else if (hoursSlept >= 7) score += 1;
+            if ("Refreshed".equals(feeling)) score += 2;
+            else if ("Okay".equals(feeling)) score += 1;
+            if ("No".equals(caffeine)) score += 1;
+            if ("No".equals(exercise)) score += 1;
+            if ("Yes".equals(consistency)) score += 1;
+            if ("No".equals(screens)) score += 1;
+            else if ("under 30 mins".equals(screens)) score += 0;
+            else score -= 1;
 
-    private void updateSleepScore() {
-        double avg = sleepDurations.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-        int stars = (int) Math.min(5, Math.round(avg / 1.5));
+            StringBuilder chat = new StringBuilder();
+            chat.append("\uD83D\uDC4B Hello! Let's review your sleep...\n\n");
+            chat.append("You slept for " + String.format("%.1f", hoursSlept) + " hours and felt \"" + feeling + "\" after waking up.\n");
 
-        String lastFeeling = userFeelings.get(userFeelings.size() - 1);
-        if ("Refreshed".equals(lastFeeling)) stars++;
-        if ("Very Tired".equals(lastFeeling)) stars--;
+            if (score >= 7) {
+                chat.append("Great job! Your sleep habits look strong.\n");
+            } else if (score >= 5) {
+                chat.append("You're doing okay, but there's room for improvement.\n");
+            } else {
+                chat.append("Let's work on your sleep. Here are some tips!\n");
+            }
 
-        if (checklistCompletedToday) stars++;
-        stars = Math.max(1, Math.min(5, stars));
+            chat.append("\n✅ Suggested checklist for tonight:\n");
+            if (!"No".equals(screens)) chat.append("- Avoid screens at least 1 hour before bed\n");
+            if (!"No".equals(caffeine)) chat.append("- Skip caffeine after 4 PM\n");
+            if (!"No".equals(exercise)) chat.append("- Avoid working out close to bedtime\n");
+            if ("No".equals(consistency)) chat.append("- Try to stick to a consistent bedtime\n");
+            if (hoursSlept < 7.5) chat.append("- Aim for at least 8 hours of sleep tonight\n");
+            chat.append("- Consider breathing exercises or reading before sleep\n");
 
-        StringBuilder starRating = new StringBuilder();
-        for (int i = 0; i < stars; i++) starRating.append("★");
-        for (int i = stars; i < 5; i++) starRating.append("☆");
+            chatbotArea.setText(chat.toString());
 
-        sleepScoreLabel.setText("Sleep Score: " + starRating);
-    }
-
-    private void updateSuggestions() {
-        double avg = sleepDurations.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-        String lastFeeling = userFeelings.isEmpty() ? "Okay" : userFeelings.get(userFeelings.size() - 1);
-
-        StringBuilder tips = new StringBuilder("Tonight's Suggestions:\n");
-
-        if (avg < 7.0) tips.append("• Try going to bed 30 minutes earlier\n");
-        if ("Tired".equals(lastFeeling) || "Very Tired".equals(lastFeeling)) tips.append("• Avoid screens 1 hour before bed\n");
-        if (!checklistCompletedToday) tips.append("• Complete your wind-down checklist\n");
-        tips.append("• Maintain a consistent sleep/wake schedule\n");
-        tips.append("• Do 5 minutes of deep breathing before bed\n");
-
-        suggestionsArea.setText(tips.toString());
-    }
-
-    private void completeChecklist() {
-        boolean allChecked = Arrays.stream(checklistItems).allMatch(JCheckBox::isSelected);
-        if (allChecked) {
-            checklistCompletedToday = true;
-            JOptionPane.showMessageDialog(this, "Checklist completed successfully!");
-            updateSleepScore();
-            updateSuggestions();
-        } else {
-            JOptionPane.showMessageDialog(this, "Please complete all checklist items before submitting.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Invalid input. Please check your time format.", "Input Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception e) {
+            System.err.println("Failed to initialize FlatLaf.");
+        }
         SwingUtilities.invokeLater(() -> new SleepWiseApp().setVisible(true));
     }
 }
